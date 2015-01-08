@@ -110,10 +110,10 @@ The data struct passed to the template is different for the index and the posts:
  }
 ```
 
-    Examples:
-* Print the title of the post: {{.Post.Title}}
-* Print the Date: {{.Post.Date.Month}} {{.Post.Date.Day}}, {{.Post.Date.Year}}
-* Print the title of the site: {{.Config.Title}}
+ Examples:
+    * Print the title of the post: {{.Post.Title}}
+    * Print the Date: {{.Post.Date.Month}} {{.Post.Date.Day}}, {{.Post.Date.Year}}
+    * Print the title of the site: {{.Config.Title}}
 
 
 * Index
@@ -125,8 +125,8 @@ The data struct passed to the template is different for the index and the posts:
  }
 ```
 
-    Examples:
-* Iterate over the posts and print the title of the post: {{range .Posts}} {{.Title}} {{end}}
+ Examples:
+    * Iterate over the posts and print the title of the post: {{range .Posts}} {{.Title}} {{end}}
 
 ### Deploying your site
 
