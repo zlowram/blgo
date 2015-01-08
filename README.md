@@ -79,7 +79,7 @@ A template is an HTML file that contains [Go template syntax](http://golang.org/
 
 The data struct passed to the template is different for the index and the posts:
 
-* Post
+#### Post
 
 ```
  data := struct {
@@ -116,7 +116,7 @@ The data struct passed to the template is different for the index and the posts:
   * Print the title of the site: {{.Config.Title}}
 
 
-* Index
+#### Index
 
 ```
  type Site struct {
