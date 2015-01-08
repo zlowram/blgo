@@ -33,6 +33,9 @@ Title="blgo" # Title of your site
 Description="A static blog engine written in Go" # Description for your site
 PreviewLength=30 # Length of the post preview in the index (number of words)
 
+# Disqus parameters
+DisqusShortname="blgo"
+
 # Directories
 Posts="posts" # Directory containing the posts
 Templates="templates" # Directory containing the templates
@@ -48,6 +51,7 @@ Author: zlowram
 Date: 01-08-2015 00:45
 Title: Hello, world!
 Template: post
+Comments: enabled
 
 
 Here starts the content of the post.
@@ -137,7 +141,7 @@ Blgo is a command-line tool, so the deploy process can be automated in different
 Future features
 ---------------
 
-* Comments via Disqus.
+* --Comments via Disqus.-- Done!
 * Support for pages.
 * Tags for posts.
 * Permalink customization.

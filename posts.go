@@ -21,6 +21,7 @@ type Post struct {
 	Preview   string
 	Template  string
 	Permalink string
+	Comments  bool
 }
 
 // Implement the sort.Interface for []Post by Date
@@ -60,6 +61,7 @@ func loadPost(filename string) Post {
 	rdate := regexp.MustCompile(`Date: (.*)`)
 	rtitle := regexp.MustCompile(`Title: (.*)`)
 	rtemplate := regexp.MustCompile(`Template: (.*)`)
+	rcomments := regexp.MustCompile(`Comments: (.*)`)
 
 	if author := rauthor.FindStringSubmatch(metadata); author != nil {
 		post.Author = author[1]
@@ -92,10 +94,37 @@ func loadPost(filename string) Post {
 		log.Fatal("Template not defined for post ", filename)
 	}
 
+	if comments := rcomments.FindStringSubmatch(metadata); comments != nil {
+		if comments[1] == "enabled" {
+			post.Comments = true
+		}
+	}
+
 	return post
 }
 
 func (p Post) convertPost() string {
+	// Check if enabled comments
+	htmlComments := &bytes.Buffer{}
+	if p.Comments {
+		data := struct {
+			DisqusShortname string
+			Permalink       string
+		}{
+			site.Config.DisqusShortname,
+			p.Permalink,
+		}
+		template_file := site.Config.Templates + "/comments.html"
+		layout, err := ioutil.ReadFile(template_file)
+		if err != nil {
+			log.Fatal(err)
+		}
+		commentsLayout := template.Must(template.New(p.Template).Parse(string(layout)))
+		if err := commentsLayout.Execute(htmlComments, data); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	// Read the post template
 	template_file := site.Config.Templates + "/" + p.Template + ".html"
 	layout, err := ioutil.ReadFile(template_file)
@@ -106,11 +135,13 @@ func (p Post) convertPost() string {
 	// Run the template
 	htmlPost := &bytes.Buffer{}
 	data := struct {
-		Config Config
-		Post   Post
+		Config   Config
+		Post     Post
+		Comments string
 	}{
 		site.Config,
 		p,
+		htmlComments.String(),
 	}
 	postLayout := template.Must(template.New(p.Template).Parse(string(layout)))
 	if err := postLayout.Execute(htmlPost, data); err != nil {

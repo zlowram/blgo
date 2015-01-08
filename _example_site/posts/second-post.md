@@ -2,6 +2,7 @@ Author: zlowram
 Date: 01-08-2015 00:50
 Title: Second post 
 Template: post
+Comments: true
 
 
 This is the content of the second post, where you'll find more junk content!

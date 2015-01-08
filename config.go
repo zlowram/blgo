@@ -7,12 +7,13 @@ import (
 )
 
 type Config struct {
-	Title         string
-	Description   string
-	Posts         string
-	Templates     string
-	Public        string
-	PreviewLength int
+	Title           string
+	Description     string
+	Posts           string
+	Templates       string
+	Public          string
+	PreviewLength   int
+	DisqusShortname string
 }
 
 func loadConfig(configfile string) Config {

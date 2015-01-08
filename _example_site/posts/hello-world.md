@@ -2,6 +2,7 @@ Author: zlowram
 Date: 01-08-2015 00:45
 Title: Hello, world!
 Template: post
+Comments: enabled
 
 
 This post is just to say "Hello, world!" and to show some content in a blog post. In order to make it larger
