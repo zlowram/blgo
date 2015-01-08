@@ -63,9 +63,9 @@ It is recommended to name the file with the title of the post replacing spaces w
 
     http://your.domain.name/2015/01/08/test-post/
 
-### Writing templates
+## Writing templates
 
-Blgo has a default bootstrap template by now, but if you have web-design skills you may want to write your own templates. Then, good news for you: writing themes for blgo is stupidly simple! You need to create a file template for the index and for the posts, and place it in the templates directory.
+Blgo has support for templates so, if you have web-design skills, you may want to write your own templates. Then, good news for you: writing themes for blgo is stupidly simple! You need to create a file template for the index and for the posts, and place it in the templates directory.
 
 The template directory structure is the following:
 
@@ -131,6 +131,8 @@ The data struct passed to the template is different for the index and the posts:
 
  Examples:
   * Iterate over the posts and print the title of the post: {{range .Posts}} {{.Title}} {{end}}
+
+Whether you don't want to make a template, or you created one and would like to share it,  check the [official templates repository](http://github.com/zlowram/blgo-templates)!
 
 ### Deploying your site
 
