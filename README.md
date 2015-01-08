@@ -141,7 +141,7 @@ Blgo is a command-line tool, so the deploy process can be automated in different
 Future features
 ---------------
 
-* --Comments via Disqus.-- Done!
+* ~~Comments via Disqus.~~ Done!
 * Support for pages.
 * Tags for posts.
 * Permalink customization.
