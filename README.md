@@ -63,6 +63,7 @@ Blgo has a default bootstrap template by now, but if you have web-design skills 
 
 The template directory structure is the following:
 
+```
 templates/
 ├── css/
 ├── fonts/
@@ -70,6 +71,7 @@ templates/
 ├── index.html
 ├── js/
 └── post.html
+```
 
 A template is an HTML file that contains [Go template syntax](http://golang.org/pkg/text/template/) at the concrete places where you want the content and information to appear.
 
@@ -77,6 +79,7 @@ The data struct passed to the template is different for the index and the posts:
 
 * Post
 
+```
  data := struct {
      Config Config
      Post   Post
@@ -103,6 +106,7 @@ The data struct passed to the template is different for the index and the posts:
  	Public        string
  	PreviewLength int
  }
+```
 
 Examples:
  * Print the title of the post: {{.Post.Title}}
@@ -112,10 +116,12 @@ Examples:
 
 * Index
 
+```
  type Site struct {
  	Config Config
  	Posts  []Post
  }
+```
 
 Examples:
  * Iterate over the posts and print the title of the post: {{range .Posts}} {{.Title}} {{end}}
