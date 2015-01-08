@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{.Config.Title}}</title>
+
+    <!-- Bootstrap -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/css/blog.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+    <div class="blog-masthead">
+        <div class="container">
+            <nav class="blog-nav">
+              <a class="blog-nav-item active" href="#">Home</a>
+            </nav>
+      </div>
+    </div><!-- /.blog-masterhead -->
+
+    <div class="container">
+
+        <div class="blog-header">
+            <h1 class="blog-title">{{.Config.Title}}</h1>
+            <p class="lead blog-description">{{.Config.Description}}</p>
+        </div><!-- /.blog-header -->
+
+        <div class="row">
+
+            <div class="col-sm-8 blog-main">
+
+                {{range .Posts}}
+                <div class="blog-post">
+                    <h2 class="blog-post-title">{{.Title}}</h2>
+                    <p class="blog-post-meta">{{.Date.Month}} {{.Date.Day}}, {{.Date.Year}} {{.Date.Hour}}:{{.Date.Minute}} by {{.Author}}</p>
+                    {{.Preview}}
+                    <p class="text-right"><a href="{{.Permalink}}">Read more</a></p>
+                </div><!-- /.blog-post -->
+                {{end}}
+
+            </div><!-- /.blog-main -->
+
+            <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+          <div class="sidebar-module sidebar-module-inset">
+            <h4>About</h4>
+            <p>blgo is a static blog engine written in Go.</p>
+          </div>
+          <div class="sidebar-module">
+            <h4>Contact</h4>
+            <ol class="list-unstyled">
+              <li><a href="http://github.com/zlowram">GitHub</a></li>
+              <li><a href="http://twitter.com/zlowram_">Twitter</a></li>
+            </ol>
+          </div>
+        </div><!-- /.blog-sidebar -->
+
+        </div><!-- /.row -->
+
+    </div><!-- /.container -->
+
+    <footer class="blog-footer">
+      <p>Powered by <a href="http://github.com/zlowram/blgo">blgo</a></p>
+      <p>
+        <a href="#">Back to top</a>
+      </p>
+    </footer>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="/js/bootstrap.min.js"></script>
+  </body>
+</html>
