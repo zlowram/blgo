@@ -27,7 +27,7 @@ can be done via the configuration file, which is in [toml](https://github.com/to
 
 An example of Blgo configuration file is the following:
 
-```
+``` Markdown
 # Parameters
 Title="blgo" # Title of your site
 Description="A static blog engine written in Go" # Description for your site
@@ -46,7 +46,7 @@ Public="static" # Directory where the generated static site will be stored
 
 In blgo each post is a plaintext file with the following structure:
 
-```
+``` Markdown
 Author: zlowram
 Date: 01-08-2015 00:45
 Title: Hello, world!
@@ -85,7 +85,7 @@ The data struct passed to the template is different for the index and the posts:
 
 #### Post
 
-```
+``` Go
  data := struct {
      Config Config
      Post   Post
@@ -122,7 +122,7 @@ The data struct passed to the template is different for the index and the posts:
 
 #### Index
 
-```
+``` Go
  type Site struct {
  	Config Config
  	Posts  []Post
