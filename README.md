@@ -61,7 +61,7 @@ Posts content is created using the [Markdown syntax](https://github.com/adam-p/m
 
 It is recommended to name the file with the title of the post replacing spaces with hyphens, because it will be included in the post's permalink. The permalink of the example post above, if the file is named "test-post.md" would be:
 
-    http://your.domain.name/2015/01/08/test-post/
+    http://example.com/2015/01/08/test-post/
 
 ## Writing templates
 
