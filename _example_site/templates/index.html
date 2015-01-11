@@ -49,6 +49,17 @@
                 </div><!-- /.blog-post -->
                 {{end}}
 
+                <nav>
+                <ul class="pager">
+                    {{if .PreviousPage}}
+                    <li><a href="{{.PreviousPage}}">Previous</a></li>
+                    {{end}}
+                    {{if .NextPage}}
+                    <li><a href="{{.NextPage}}">Next</a></li>
+                    {{end}}
+                </ul>
+                </nav>
+
             </div><!-- /.blog-main -->
 
             <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
