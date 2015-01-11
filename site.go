@@ -129,12 +129,19 @@ func (s Site) generateIndex() []string {
 		prev = "/p/" + strconv.Itoa(i-1)
 
 		switch {
+		// First page
 		case i <= 0:
 			prev = ""
+		// Second page when = 2 pages
+		case i-1 == 0 && i >= pages-1:
+			prev = "/"
+			next = ""
+		// Second page
+		case i-1 == 0:
+			prev = "/"
+		// Last page
 		case i >= pages-1:
 			next = ""
-		case i == 1:
-			prev = "/"
 		}
 
 		data := struct {
