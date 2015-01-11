@@ -127,10 +127,23 @@ The data struct passed to the template is different for the index and the posts:
  	Config Config
  	Posts  []Post
  }
+
+ data := struct {
+     Config       Config
+     Posts        []Post
+     PreviousPage string
+     NextPage     string
+ }{
+     s.Config,
+     s.Posts[st:ed],
+     prev,
+     next,
+ }
 ```
 
  Examples:
   * Iterate over the posts and print the title of the post: {{range .Posts}} {{.Title}} {{end}}
+  * Check if next page exists and place a link: {{if .NextPage}}<a href="{{.NextPage}}">Next</a>{{end}}
 
 Whether you don't want to make a template, or you created one and would like to share it,  check the [official templates repository](http://github.com/zlowram/blgo-templates)!
 
@@ -140,10 +153,16 @@ The easiest way to deploy your site generated with blgo, is to copy the contents
 
 Blgo is a command-line tool, so the deploy process can be automated in different ways (Makefiles, Git Hooks, etc.).If you have a cool deploying method, let us know!
 
+
+Current features
+----------------
+
+* Index pagination
+* Comments via disqus
+
 Future features
 ---------------
 
-* ~~Comments via Disqus.~~ Done!
 * Support for pages.
 * Tags for posts.
 * Permalink customization.
