@@ -13,6 +13,7 @@ type Config struct {
 	Templates       string
 	Public          string
 	PreviewLength   int
+	PostsPerPage    int
 	DisqusShortname string
 }
 

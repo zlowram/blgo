@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"sort"
+	"strconv"
 	"text/template"
 )
 
@@ -71,26 +73,91 @@ func (s Site) generateSite() {
 		log.Fatal(err)
 	}
 
-	// Generate the index
-	if err := ioutil.WriteFile(s.Config.Public+"/index.html", []byte(s.generateIndex()), 0755); err != nil {
+	// Generate the index main page
+	index := s.generateIndex()
+	if err := ioutil.WriteFile(s.Config.Public+"/index.html", []byte(index[0]), 0755); err != nil {
 		log.Fatal(err)
+	}
+
+	index = index[1:len(index)]
+
+	// Now the rest of the pages (if existent)
+	if len(index) <= 0 {
+		return
+	}
+
+	for i, page := range index {
+		path := s.Config.Public + "/p/" + strconv.Itoa(i+1)
+		if err := os.MkdirAll(path, 0755); err != nil {
+			log.Fatal(err)
+		}
+
+		if err := ioutil.WriteFile(path+"/index.html", []byte(page), 0755); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
-func (s Site) generateIndex() string {
-	// Read the index template used
+func (s Site) generateIndex() []string {
+	var htmlPages []string
+
+	// Read the index template used and parse it
 	template_file := s.Config.Templates + "/index.html"
 	layout, err := ioutil.ReadFile(template_file)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Run the template
-	htmlIndex := &bytes.Buffer{}
 	indexTemplate := template.Must(template.New("index").Parse(string(layout)))
-	if err := indexTemplate.Execute(htmlIndex, s); err != nil {
-		log.Fatal(err)
+
+	// Pagination
+	pages := int(math.Ceil(float64(len(s.Posts)) / float64(s.Config.PostsPerPage)))
+
+	for i := 0; i < pages; i++ {
+		var st, ed int
+		var next, prev string
+
+		posts := i*s.Config.PostsPerPage + s.Config.PostsPerPage
+		if posts >= len(s.Posts) {
+			st = i * s.Config.PostsPerPage
+			ed = len(s.Posts)
+		} else {
+			st = i * s.Config.PostsPerPage
+			ed = i*s.Config.PostsPerPage + s.Config.PostsPerPage
+		}
+
+		next = "/p/" + strconv.Itoa(i+1)
+		prev = "/p/" + strconv.Itoa(i-1)
+
+		switch {
+		case i <= 0:
+			prev = ""
+		case i >= pages-1:
+			next = ""
+		case i == 1:
+			prev = "/"
+		}
+
+		data := struct {
+			Config       Config
+			Posts        []Post
+			PreviousPage string
+			NextPage     string
+		}{
+			s.Config,
+			s.Posts[st:ed],
+			prev,
+			next,
+		}
+
+		// Run the template
+		htmlIndex := &bytes.Buffer{}
+		if err := indexTemplate.Execute(htmlIndex, data); err != nil {
+			log.Fatal(err)
+		}
+
+		htmlPages = append(htmlPages, htmlIndex.String())
+
 	}
 
-	return htmlIndex.String()
+	return htmlPages
 }
