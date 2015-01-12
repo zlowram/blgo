@@ -28,18 +28,19 @@ can be done via the configuration file, which is in [toml](https://github.com/to
 An example of Blgo configuration file is the following:
 
 ``` Markdown
-# Parameters
-Title="blgo" # Title of your site
-Description="A static blog engine written in Go" # Description for your site
-PreviewLength=30 # Length of the post preview in the index (number of words)
+# Site parameters
+Title = "blgo" # Title of your site
+Description = "A static blog engine written in Go" # Description for your site
+PreviewLength = 30 # Length of the post preview in the index (number of words)
+PostsPerPage = 1 # Index posts pagination
 
 # Disqus parameters
-DisqusShortname="blgo"
+DisqusShortname = "blgo"
 
 # Directories
-Posts="posts" # Directory containing the posts
-Templates="templates" # Directory containing the templates
-Public="static" # Directory where the generated static site will be stored
+Posts = "posts" # Directory containing the posts
+Templates = "templates" # Directory containing the templates
+Public = "static" # Directory where the generated static site will be stored
 ```
 
 ### Writing posts
