@@ -143,7 +143,7 @@ The data struct passed to the template is different for the index and the posts:
 
  Examples:
   * Iterate over the posts and print the title of the post: {{range .Posts}} {{.Title}} {{end}}
-  * Check if next page exists and place a link: {{if .NextPage}}<a href="{{.NextPage}}">Next</a>{{end}}
+  * Check if next page exists and print the path to it: {{if .NextPage}} {{.NextPage}} {{end}}
 
 Whether you don't want to make a template, or you created one and would like to share it,  check the [official templates repository](http://github.com/zlowram/blgo-templates)!
 
