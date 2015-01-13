@@ -17,7 +17,7 @@ Getting started
 ### Install
 
 ```
-go get http://github.com/zlowram/blgo
+go get github.com/zlowram/blgo
 ```
 
 ### Creating your site
