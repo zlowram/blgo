@@ -48,10 +48,13 @@ func loadPost(filename string) Post {
 	// Convert the markdown to HTML
 	post.Content = string(blackfriday.MarkdownCommon([]byte(strings.Trim(strings.Join(x[1:], "\n\n"), "\n"))))
 
-	// Get the excerpt
-	words := strings.Split(post.Content, " ")
+	// Get the preview
+	rtags := regexp.MustCompile(`<(pre|code|img).*>(.|\s)*?(</(pre|code|img)>)+`)
+	stripped := rtags.ReplaceAllString(post.Content, "[...]")
+
+	words := strings.Split(stripped, " ")
 	if len(words) <= site.Config.PreviewLength {
-		post.Preview = post.Content
+		post.Preview = stripped
 	} else {
 		post.Preview = strings.Join(words[:site.Config.PreviewLength], " ") + "..."
 	}
