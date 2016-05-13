@@ -174,7 +174,7 @@ Sites using blgo
 
 If you are using blgo for your site, we would like to know! You can either contact me via [twitter](http://twitter.com/zlowram_) or you can send a pull-request adding your URL in the following list:
 
-* [nopat.ch](http://nopat.ch) (zlowram's site)
+* [nopatch.me](http://nopatch.me) (zlowram's site)
 * your site here 
 
 Contributing
