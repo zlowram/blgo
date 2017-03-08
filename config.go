@@ -15,6 +15,7 @@ type Config struct {
 	PreviewLength   int
 	PostsPerPage    int
 	DisqusShortname string
+	GoogleAnalyticsID string
 }
 
 func loadConfig(configfile string) Config {

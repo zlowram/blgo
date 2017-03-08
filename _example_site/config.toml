@@ -7,6 +7,9 @@ PostsPerPage = 1 # Index posts pagination
 # Disqus parameters
 DisqusShortname = "blgo"
 
+# Google Analytics
+GoogleAnalyticsID = "UA-XXXXXXXXX-X"
+
 # Directories
 Posts = "posts" # Directory containing the posts
 Templates = "templates" # Directory containing the templates
