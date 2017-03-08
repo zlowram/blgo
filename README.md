@@ -163,7 +163,7 @@ it is really easy to do so, just add the following script tag within the <head> 
 	 m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 	 })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-	ga('create', '{{.GoogleAnalyticsID}}', 'auto');
+	ga('create', '{{.Config.GoogleAnalyticsID}}', 'auto');
 	ga('send', 'pageview');
 </script>
 
