@@ -37,6 +37,9 @@ PostsPerPage = 1 # Index posts pagination
 # Disqus parameters
 DisqusShortname = "blgo"
 
+# GoogleAnalytics
+GoogleAnalyticsID = "UA-XXXXXXXXX-X"
+
 # Directories
 Posts = "posts" # Directory containing the posts
 Templates = "templates" # Directory containing the templates
@@ -148,6 +151,24 @@ The data struct passed to the template is different for the index and the posts:
 
 Whether you don't want to make a template, or you created one and would like to share it,  check the [official templates repository](http://github.com/zlowram/blgo-templates)!
 
+### Using Google Analytics
+
+Blgo currently has built-in support for Google Analytics. However, the Template that you use must also support it. If the template does not support Google Analytics,
+it is really easy to do so, just add the following script tag within the <head> </head> tags in each template page:
+
+``` Html
+<script>
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	 (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	 m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	 })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+	ga('create', '{{.GoogleAnalyticsID}}', 'auto');
+	ga('send', 'pageview');
+</script>
+
+```
+
 ### Deploying your site
 
 The easiest way to deploy your site generated with blgo, is to copy the contents of the public directory in the root folder of your favorite web server.
@@ -160,6 +181,7 @@ Current features
 
 * Index pagination
 * Comments via disqus
+* Support for GoogleAnalytics
 
 Future features
 ---------------
