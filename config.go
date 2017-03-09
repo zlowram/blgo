@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Title           string
 	Description     string
+	Keywords		string
 	Posts           string
 	Templates       string
 	Public          string

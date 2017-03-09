@@ -31,6 +31,7 @@ An example of Blgo configuration file is the following:
 # Site parameters
 Title = "blgo" # Title of your site
 Description = "A static blog engine written in Go" # Description for your site
+Keywords = "blog, Go" # Keywords for your site
 PreviewLength = 30 # Length of the post preview in the index (number of words)
 PostsPerPage = 1 # Index posts pagination
 
