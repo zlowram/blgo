@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"log"
 	"regexp"
@@ -13,7 +14,7 @@ import (
 	"github.com/russross/blackfriday"
 )
 
-type Post struct {
+type post struct {
 	Author    string
 	Date      time.Time
 	Title     string
@@ -24,42 +25,54 @@ type Post struct {
 	Comments  bool
 }
 
-// Implement the sort.Interface for []Post by Date
-type ByDate []Post
+type byDate []post
 
-func (a ByDate) Len() int           { return len(a) }
-func (a ByDate) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByDate) Less(i, j int) bool { return a[i].Date.After(a[j].Date) }
+func (a byDate) Len() int           { return len(a) }
+func (a byDate) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byDate) Less(i, j int) bool { return a[i].Date.After(a[j].Date) }
 
-func loadPost(filename string) Post {
-	var post Post
-	const dateFormat = "01-02-2006 15:04"
+func loadPost(filename string) (post, error) {
+	var p post
 
-	// Read the post file
 	content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Extract metadata and content
-	x := strings.Split(string(content), "\n\n")
-	metadata := x[0]
+	contentSplit := strings.Split(string(content), "\n\n")
+	if (len(contentSplit) < 2) {
+		return p, errors.New("either metadata or post content is missing")
+	}
+	metadata := contentSplit[0]
+	p.Content = string(blackfriday.MarkdownCommon([]byte(strings.Trim(strings.Join(contentSplit[1:], "\n\n"), "\n"))))
+	p.Preview = getPostPreview(p.Content)
 
-	// Convert the markdown to HTML
-	post.Content = string(blackfriday.MarkdownCommon([]byte(strings.Trim(strings.Join(x[1:], "\n\n"), "\n"))))
-
-	// Get the preview
-	rtags := regexp.MustCompile(`<(pre|code|img).*>(.|\s)*?(</(pre|code|img)>)+`)
-	stripped := rtags.ReplaceAllString(post.Content, "[...]")
-
-	words := strings.Split(stripped, " ")
-	if len(words) <= site.Config.PreviewLength {
-		post.Preview = stripped
-	} else {
-		post.Preview = strings.Join(words[:site.Config.PreviewLength], " ") + "..."
+	if err := p.processMetadata(metadata, filename); err != nil {
+		return p, err
 	}
 
-	// Process metadata
+	return p, nil
+}
+
+func getPostPreview(content string) string {
+	var preview string
+
+	rtags := regexp.MustCompile(`<(pre|code|img).*>(.|\s)*?(</(pre|code|img)>)+`)
+	stripped := rtags.ReplaceAllString(content, "[...]")
+
+	words := strings.Split(stripped, " ")
+	if len(words) <= blog.Config.PreviewLength {
+		preview = stripped
+	} else {
+		preview = strings.Join(words[:blog.Config.PreviewLength], " ") + "..."
+	}
+
+	return preview
+}
+
+func (p *post) processMetadata(metadata string, postName string) error {
+	const dateFormat = "01-02-2006 15:04"
+
 	rauthor := regexp.MustCompile(`Author: (.*)`)
 	rdate := regexp.MustCompile(`Date: (.*)`)
 	rtitle := regexp.MustCompile(`Title: (.*)`)
@@ -67,89 +80,95 @@ func loadPost(filename string) Post {
 	rcomments := regexp.MustCompile(`Comments: (.*)`)
 
 	if author := rauthor.FindStringSubmatch(metadata); author != nil {
-		post.Author = author[1]
+		p.Author = author[1]
 	} else {
-		log.Fatal("Author not defined for post ", filename)
+		return errors.New("author not defined for post " + postName)
 	}
 
 	if date := rdate.FindStringSubmatch(metadata); date != nil {
-		post.Date, _ = time.Parse(dateFormat, date[1])
+		p.Date, _ = time.Parse(dateFormat, date[1])
 
-		// Generate the url
-		year := strconv.Itoa(post.Date.Year())
-		month := strconv.Itoa(int(post.Date.Month()))
-		day := strconv.Itoa(post.Date.Day())
-		fname := strings.Split(strings.Split(filename, ".")[0], "/")[1]
-		post.Permalink = "/" + year + "/" + month + "/" + day + "/" + fname + "/"
+		year := strconv.Itoa(p.Date.Year())
+		month := strconv.Itoa(int(p.Date.Month()))
+		day := strconv.Itoa(p.Date.Day())
+		fname := strings.Split(strings.Split(postName, ".")[0], "/")[1]
+		p.Permalink = "/" + year + "/" + month + "/" + day + "/" + fname + "/"
 	} else {
-		log.Fatal("Date not defined for post ", filename)
+		return errors.New("date not defined for post " + postName)
 	}
 
 	if title := rtitle.FindStringSubmatch(metadata); title != nil {
-		post.Title = title[1]
+		p.Title = title[1]
 	} else {
-		log.Fatal("Title not defined for post ", filename)
+		return errors.New("title not defined for post " + postName)
 	}
 
 	if template := rtemplate.FindStringSubmatch(metadata); template != nil {
-		post.Template = template[1]
+		p.Template = template[1]
 	} else {
-		log.Fatal("Template not defined for post ", filename)
+		return errors.New("template not defined for post " + postName)
 	}
 
 	if comments := rcomments.FindStringSubmatch(metadata); comments != nil {
 		if comments[1] == "enabled" {
-			post.Comments = true
+			p.Comments = true
 		}
 	}
 
-	return post
+	return nil
 }
 
-func (p Post) convertPost() string {
-	// Check if enabled comments
+func (p *post) convertPost() (string, error) {
+	htmlComments, err := p.convertComments()
+	if err != nil {
+		return "", err
+	}
+
+	templateFile := blog.Config.Templates + "/" + p.Template + ".html"
+	layout, err := ioutil.ReadFile(templateFile)
+	if err != nil {
+		return "", err
+	}
+
+	htmlPost := &bytes.Buffer{}
+	data := struct {
+		Config   config
+		Post     post
+		Comments string
+	}{
+		blog.Config,
+		*p,
+		htmlComments,
+	}
+	postLayout := template.Must(template.New(p.Template).Parse(string(layout)))
+	if err := postLayout.Execute(htmlPost, data); err != nil {
+		return "", err
+	}
+
+	return htmlPost.String(), nil
+}
+
+func (p *post) convertComments() (string, error) {
 	htmlComments := &bytes.Buffer{}
+
 	if p.Comments {
 		data := struct {
 			DisqusShortname string
 			Permalink       string
 		}{
-			site.Config.DisqusShortname,
+			blog.Config.DisqusShortname,
 			p.Permalink,
 		}
-		template_file := site.Config.Templates + "/comments.html"
-		layout, err := ioutil.ReadFile(template_file)
+		templateFile := blog.Config.Templates + "/comments.html"
+		layout, err := ioutil.ReadFile(templateFile)
 		if err != nil {
-			log.Fatal(err)
+			return "", err
 		}
 		commentsLayout := template.Must(template.New(p.Template).Parse(string(layout)))
 		if err := commentsLayout.Execute(htmlComments, data); err != nil {
-			log.Fatal(err)
+			return "", err
 		}
 	}
 
-	// Read the post template
-	template_file := site.Config.Templates + "/" + p.Template + ".html"
-	layout, err := ioutil.ReadFile(template_file)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Run the template
-	htmlPost := &bytes.Buffer{}
-	data := struct {
-		Config   Config
-		Post     Post
-		Comments string
-	}{
-		site.Config,
-		p,
-		htmlComments.String(),
-	}
-	postLayout := template.Must(template.New(p.Template).Parse(string(layout)))
-	if err := postLayout.Execute(htmlPost, data); err != nil {
-		log.Fatal(err)
-	}
-
-	return htmlPost.String()
+	return htmlComments.String(), nil
 }

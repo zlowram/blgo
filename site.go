@@ -9,162 +9,174 @@ import (
 	"sort"
 	"strconv"
 	"text/template"
+	"path/filepath"
 )
 
-type Site struct {
-	Config Config
-	Posts  []Post
+type site struct {
+	Config config
+	Posts  []post
 }
 
-var site Site
+var blog site
 
-func newSite(cfg Config) Site {
-	site = Site{Config: cfg}
-	return site
+func newSite(cfg config) site {
+	blog = site{Config: cfg}
+	return blog
 }
 
-func (s Site) generateSite() {
-	// Delete the site folder and create it again
+func (s *site) generateSite() {
 	if err := os.RemoveAll(s.Config.Public); err != nil {
-		log.Fatal(err)
+		log.Fatalf("error removing site folder: %v\n", err)
 	}
 	if err := os.Mkdir(s.Config.Public, 0755); err != nil {
-		log.Fatal(err)
+		log.Fatalf("error creating site folder: %v\n", err)
 	}
 
-	// Get all the posts and convert them
-	dirlist, err := ioutil.ReadDir(s.Config.Posts)
+	if err := filepath.Walk(s.Config.Posts, generatePost(s)); err != nil {
+		log.Fatalf("error creating posts html files: %v\n", err)
+	}
+
+	if err := s.copyTemplateFiles(); err != nil {
+		log.Fatalf("error copying tempalte files to site directory: %v\n", err)
+	}
+
+	indexPages, err := s.generateIndex()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error writing index pages: %v\n", err)
 	}
 
-	for _, f := range dirlist {
-		// load the post
-		p := loadPost(s.Config.Posts + "/" + f.Name())
-
-		// Add the post to post slice
-		s.Posts = append(s.Posts, p)
-
-		// create the path
-		if err := os.MkdirAll(s.Config.Public+p.Permalink, 0755); err != nil {
-			log.Fatal(err)
-		}
-
-		// convert & write
-		if err := ioutil.WriteFile(s.Config.Public+p.Permalink+"index.html", []byte(p.convertPost()), 0755); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	// Sort the posts by date
-	sort.Sort(ByDate(s.Posts))
-
-	// Copy all necessary to the site folder (css, js and assets)
-	if err := copyDir(s.Config.Templates+"/css", s.Config.Public+"/css"); err != nil {
-		log.Fatal(err)
-	}
-	if err := copyDir(s.Config.Templates+"/js", s.Config.Public+"/js"); err != nil {
-		log.Fatal(err)
-	}
-	if err := copyDir(s.Config.Templates+"/fonts", s.Config.Public+"/fonts"); err != nil {
-		log.Fatal(err)
-	}
-	if err := copyDir(s.Config.Templates+"/images", s.Config.Public+"/images"); err != nil {
-		log.Fatal(err)
-	}
-
-	// Generate the index main page
-	index := s.generateIndex()
-	if err := ioutil.WriteFile(s.Config.Public+"/index.html", []byte(index[0]), 0755); err != nil {
-		log.Fatal(err)
-	}
-
-	index = index[1:len(index)]
-
-	// Now the rest of the pages (if existent)
-	if len(index) <= 0 {
-		return
-	}
-
-	for i, page := range index {
-		path := s.Config.Public + "/p/" + strconv.Itoa(i+1)
-		if err := os.MkdirAll(path, 0755); err != nil {
-			log.Fatal(err)
-		}
-
-		if err := ioutil.WriteFile(path+"/index.html", []byte(page), 0755); err != nil {
-			log.Fatal(err)
-		}
+	if err := s.writeIndexFiles(indexPages); err != nil {
+		log.Fatalf("error writing index pages: %v\n", err)
 	}
 }
 
-func (s Site) generateIndex() []string {
+func generatePost(s *site) filepath.WalkFunc {
+	return func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		p, err := loadPost(s.Config.Posts + "/" + info.Name())
+		if err != nil {
+			return err
+		}
+		s.Posts = append(s.Posts, p)
+
+		if err := os.MkdirAll(s.Config.Public+p.Permalink, 0755); err != nil {
+			return err
+		}
+		postHTML, err := p.convertPost()
+		if err != nil {
+			return err
+		}
+		if err := ioutil.WriteFile(s.Config.Public+p.Permalink+"index.html", []byte(postHTML), 0755); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func (s *site) copyTemplateFiles() error {
+	if err := copyDir(s.Config.Templates+"/css", s.Config.Public+"/css"); err != nil {
+		return err
+	}
+	if err := copyDir(s.Config.Templates+"/js", s.Config.Public+"/js"); err != nil {
+		return err
+	}
+	if err := copyDir(s.Config.Templates+"/fonts", s.Config.Public+"/fonts"); err != nil {
+		return err
+	}
+	if err := copyDir(s.Config.Templates+"/images", s.Config.Public+"/images"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *site) generateIndex() ([]string, error) {
 	var htmlPages []string
 
-	// Read the index template used and parse it
-	template_file := s.Config.Templates + "/index.html"
-	layout, err := ioutil.ReadFile(template_file)
+	templateFile := s.Config.Templates + "/index.html"
+	layout, err := ioutil.ReadFile(templateFile)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	indexTemplate := template.Must(template.New("index").Parse(string(layout)))
 
-	// Pagination
+	sort.Sort(byDate(s.Posts))
+
 	pages := int(math.Ceil(float64(len(s.Posts)) / float64(s.Config.PostsPerPage)))
-
 	for i := 0; i < pages; i++ {
-		var st, ed int
-		var next, prev string
+		st := 0
+		ed := len(s.Posts)
+		prev := ""
+		next := ""
 
-		posts := i*s.Config.PostsPerPage + s.Config.PostsPerPage
-		if posts >= len(s.Posts) {
+		if pages > 1 {
 			st = i * s.Config.PostsPerPage
-			ed = len(s.Posts)
-		} else {
-			st = i * s.Config.PostsPerPage
-			ed = i*s.Config.PostsPerPage + s.Config.PostsPerPage
-		}
+			ed = i * s.Config.PostsPerPage + s.Config.PostsPerPage
 
-		next = "/p/" + strconv.Itoa(i+1)
-		prev = "/p/" + strconv.Itoa(i-1)
-
-		switch {
-		// First page
-		case i <= 0:
 			prev = ""
-		// Second page when = 2 pages
-		case i-1 == 0 && i >= pages-1:
-			prev = "/"
-			next = ""
-		// Second page
-		case i-1 == 0:
-			prev = "/"
-		// Last page
-		case i >= pages-1:
-			next = ""
+			switch {
+			case i > 1:
+				prev = "/p/" + strconv.Itoa(i-1)
+			case i == 1:
+				prev = "/"
+			}
+			next = "/p/" + strconv.Itoa(i+1)
+			if i == pages - 1 {
+				next = ""
+			}
 		}
 
-		data := struct {
-			Config       Config
-			Posts        []Post
-			PreviousPage string
-			NextPage     string
-		}{
-			s.Config,
-			s.Posts[st:ed],
-			prev,
-			next,
+		htmlIndex, err := generateIndexPageHTML(indexTemplate, s.Config, s.Posts[st:ed], prev, next)
+		if err != nil {
+			return nil, err
 		}
-
-		// Run the template
-		htmlIndex := &bytes.Buffer{}
-		if err := indexTemplate.Execute(htmlIndex, data); err != nil {
-			log.Fatal(err)
-		}
-
-		htmlPages = append(htmlPages, htmlIndex.String())
-
+		
+		htmlPages = append(htmlPages, htmlIndex)
 	}
 
-	return htmlPages
+	return htmlPages, nil
+}
+
+func generateIndexPageHTML(indexTemplate *template.Template, cfg config, posts []post, prev string, next string) (string, error) {
+	data := struct {
+		Config       config
+		Posts        []post
+		PreviousPage string
+		NextPage     string
+	}{
+		cfg,
+		posts,
+		prev,
+		next,
+	}
+
+	htmlIndex := &bytes.Buffer{}
+	if err := indexTemplate.Execute(htmlIndex, data); err != nil {
+		return "", err
+	}
+
+	return htmlIndex.String(), nil
+}
+
+func (s *site) writeIndexFiles(indexPages []string) error {
+	for i, page := range indexPages {
+		path := s.Config.Public
+		if i > 0 {
+			path = s.Config.Public + "/p/" + strconv.Itoa(i)
+			if err := os.MkdirAll(path, 0755); err != nil {
+				return err
+			}
+		}
+
+		if err := ioutil.WriteFile(path+"/index.html", []byte(page), 0755); err != nil {
+			return err
+		}
+	}
+	return nil
 }

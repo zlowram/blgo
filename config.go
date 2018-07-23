@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type Config struct {
+type config struct {
 	Title           string
 	Description     string
 	Keywords		string
@@ -19,17 +19,15 @@ type Config struct {
 	GoogleAnalyticsID string
 }
 
-func loadConfig(configfile string) Config {
-	// Check if config file is present
+func loadConfig(configfile string) config {
 	if _, err := os.Stat(configfile); err != nil {
 		log.Fatal("Config file not found: ", configfile)
 	}
 
-	// Load it!
-	var config Config
-	if _, err := toml.DecodeFile(configfile, &config); err != nil {
+	var cfg config
+	if _, err := toml.DecodeFile(configfile, &cfg); err != nil {
 		log.Fatal(err)
 	}
 
-	return config
+	return cfg
 }

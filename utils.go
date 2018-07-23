@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"log"
 	"os"
 )
 
@@ -20,12 +19,11 @@ func copyFile(src string, dest string) error {
 	defer destfile.Close()
 
 	if _, err = io.Copy(destfile, sourcefile); err == nil {
-		sourceinfo, err := os.Stat(src)
 		if err != nil {
-			err = os.Chmod(dest, sourceinfo.Mode())
+			return err
 		}
 	}
-	return err
+	return nil
 }
 
 func copyDir(src string, dest string) error {
@@ -47,14 +45,14 @@ func copyDir(src string, dest string) error {
 
 		if obj.IsDir() {
 			if err = copyDir(sourcefilepointer, destinationfilepointer); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		} else {
 			if err = copyFile(sourcefilepointer, destinationfilepointer); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		}
 
 	}
-	return err
+	return nil
 }
