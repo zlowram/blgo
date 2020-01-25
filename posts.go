@@ -40,7 +40,7 @@ func loadPost(filename string) (post, error) {
 	}
 
 	contentSplit := strings.Split(string(content), "\n\n")
-	if (len(contentSplit) < 2) {
+	if len(contentSplit) < 2 {
 		return p, errors.New("either metadata or post content is missing")
 	}
 	metadata := contentSplit[0]
