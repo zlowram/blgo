@@ -7,15 +7,15 @@ import (
 )
 
 type config struct {
-	Title           string
-	Description     string
-	Keywords		string
-	Posts           string
-	Templates       string
-	Public          string
-	PreviewLength   int
-	PostsPerPage    int
-	DisqusShortname string
+	Title             string
+	Description       string
+	Keywords          string
+	Posts             string
+	Templates         string
+	Public            string
+	PreviewLength     int
+	PostsPerPage      int
+	DisqusShortname   string
 	GoogleAnalyticsID string
 }
 
