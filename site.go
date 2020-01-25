@@ -60,7 +60,7 @@ func generatePost(s *site) filepath.WalkFunc {
 			return nil
 		}
 
-		p, err := loadPost(s.Config.Posts + "/" + info.Name())
+		p, err := loadPost(path)
 		if err != nil {
 			return err
 		}
