@@ -6,10 +6,10 @@ import (
 	"log"
 	"math"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"text/template"
-	"path/filepath"
 )
 
 type site struct {
@@ -117,7 +117,7 @@ func (s *site) generateIndex() ([]string, error) {
 
 		if pages > 1 {
 			st = i * s.Config.PostsPerPage
-			ed = i * s.Config.PostsPerPage + s.Config.PostsPerPage
+			ed = i*s.Config.PostsPerPage + s.Config.PostsPerPage
 
 			prev = ""
 			switch {
@@ -127,7 +127,8 @@ func (s *site) generateIndex() ([]string, error) {
 				prev = "/"
 			}
 			next = "/p/" + strconv.Itoa(i+1)
-			if i == pages - 1 {
+			if i == pages-1 {
+				ed = len(s.Posts) - 1
 				next = ""
 			}
 		}
@@ -136,7 +137,7 @@ func (s *site) generateIndex() ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		
+
 		htmlPages = append(htmlPages, htmlIndex)
 	}
 
