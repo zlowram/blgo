@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="{{.Config.Description}}">
-	<meta name="keywords" content="{{.Config.Keywords}}">
-    <title>{{.Config.Title}}</title>
+	<meta name="description" content="{{.Site.Config.Description}}">
+	<meta name="keywords" content="{{.Site.Config.Keywords}}">
+    <title>{{.Site.Config.Title}}</title>
 
     <!-- Bootstrap -->
     <link href="/css/bootstrap.min.css" rel="stylesheet">
@@ -26,7 +26,7 @@
 		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-		ga('create', '{{.Config.GoogleAnalyticsID}}', 'auto');
+		ga('create', '{{.Site.Config.GoogleAnalyticsID}}', 'auto');
 		ga('send', 'pageview');
 	</script>
   </head>
@@ -36,6 +36,7 @@
         <div class="container">
             <nav class="blog-nav">
               <a class="blog-nav-item active" href="/">Home</a>
+              {{range .Site.Posts}}{{if and .Pinned .Page}}<a class="blog-nav-item" href="{{.Permalink}}">{{.Title}}</a>{{end}}{{end}}
             </nav>
       </div>
     </div><!-- /.blog-masterhead -->
@@ -43,8 +44,8 @@
     <div class="container">
 
         <div class="blog-header">
-            <h1 class="blog-title">{{.Config.Title}}</h1>
-            <p class="lead blog-description">{{.Config.Description}}</p>
+            <h1 class="blog-title">{{.Site.Config.Title}}</h1>
+            <p class="lead blog-description">{{.Site.Config.Description}}</p>
         </div><!-- /.blog-header -->
 
         <div class="row">
@@ -75,15 +76,16 @@
 
             <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
           <div class="sidebar-module sidebar-module-inset">
-            <h4>About</h4>
-            <p>blgo is a static blog engine written in Go.</p>
-          </div>
-          <div class="sidebar-module">
-            <h4>Contact</h4>
-            <ol class="list-unstyled">
-              <li><a href="http://github.com/zlowram">GitHub</a></li>
-              <li><a href="http://twitter.com/zlowram_">Twitter</a></li>
-            </ol>
+            <h4>Pinned posts</h4>
+            <p>
+            {{range .Site.Posts}}
+            {{if not .Page}}
+            {{if .Pinned}}
+            <a href="{{.Permalink}}">{{.Title}}</a><br>
+            {{end}}
+            {{end}}
+            {{end}}
+            </p>
           </div>
         </div><!-- /.blog-sidebar -->
 
