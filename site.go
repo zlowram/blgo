@@ -24,7 +24,7 @@ func newSite(cfg config) site {
 	return blog
 }
 
-func (s *site) generateSite() {
+func (s *site) build() {
 	if err := os.RemoveAll(s.Config.Public); err != nil {
 		log.Fatalf("error removing site folder: %v\n", err)
 	}
@@ -32,8 +32,8 @@ func (s *site) generateSite() {
 		log.Fatalf("error creating site folder: %v\n", err)
 	}
 
-	if err := filepath.Walk(s.Config.Posts, generatePost(s)); err != nil {
-		log.Fatalf("error creating posts html files: %v\n", err)
+	if err := filepath.Walk(s.Config.Posts, readPosts(s)); err != nil {
+		log.Fatalf("error reading posts: %v\n", err)
 	}
 
 	if err := s.copyTemplateFiles(); err != nil {
@@ -45,12 +45,16 @@ func (s *site) generateSite() {
 		log.Fatalf("error writing index pages: %v\n", err)
 	}
 
-	if err := s.writeIndexFiles(indexPages); err != nil {
+	if err := s.writePosts(); err != nil {
+		log.Fatalf("error writing posts pages: %v\n", err)
+	}
+
+	if err := s.writeIndex(indexPages); err != nil {
 		log.Fatalf("error writing index pages: %v\n", err)
 	}
 }
 
-func generatePost(s *site) filepath.WalkFunc {
+func readPosts(s *site) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -60,24 +64,31 @@ func generatePost(s *site) filepath.WalkFunc {
 			return nil
 		}
 
-		p, err := loadPost(path)
+		p, err := newPost(path)
 		if err != nil {
 			return err
 		}
+
 		s.Posts = append(s.Posts, p)
 
+		return nil
+	}
+}
+
+func (s *site) writePosts() error {
+	for _, p := range s.Posts {
 		if err := os.MkdirAll(s.Config.Public+p.Permalink, 0755); err != nil {
 			return err
 		}
-		postHTML, err := p.convertPost()
+		postHTML, err := p.build(s)
 		if err != nil {
 			return err
 		}
 		if err := ioutil.WriteFile(s.Config.Public+p.Permalink+"index.html", []byte(postHTML), 0755); err != nil {
 			return err
 		}
-		return nil
 	}
+	return nil
 }
 
 func (s *site) copyTemplateFiles() error {
@@ -99,6 +110,7 @@ func (s *site) copyTemplateFiles() error {
 func (s *site) generateIndex() ([]string, error) {
 	var htmlPages []string
 
+	// Read the index template
 	templateFile := s.Config.Templates + "/index.html"
 	layout, err := ioutil.ReadFile(templateFile)
 	if err != nil {
@@ -106,14 +118,24 @@ func (s *site) generateIndex() ([]string, error) {
 	}
 	indexTemplate := template.Must(template.New("index").Parse(string(layout)))
 
-	sort.Sort(byDate(s.Posts))
+	// Only posts
+	var posts []post
+	for _, post := range s.Posts {
+		if !post.Page {
+			posts = append(posts, post)
+		}
+	}
 
-	pages := int(math.Ceil(float64(len(s.Posts)) / float64(s.Config.PostsPerPage)))
+	sort.Sort(byDate(posts))
+
+	// Group posts in pages
+	pages := int(math.Ceil(float64(len(posts)) / float64(s.Config.PostsPerPage)))
 	for i := 0; i < pages; i++ {
 		st := 0
-		ed := len(s.Posts)
+		ed := len(posts)
 		prev := ""
 		next := ""
+		curr := ""
 
 		if pages > 1 {
 			st = i * s.Config.PostsPerPage
@@ -121,51 +143,48 @@ func (s *site) generateIndex() ([]string, error) {
 
 			prev = ""
 			switch {
+			case i == 0:
+				curr = "/"
 			case i > 1:
 				prev = "/p/" + strconv.Itoa(i-1)
+				curr = "/p/" + strconv.Itoa(i)
 			case i == 1:
 				prev = "/"
 			}
 			next = "/p/" + strconv.Itoa(i+1)
 			if i == pages-1 {
-				ed = len(s.Posts) - 1
+				ed = len(posts)
 				next = ""
 			}
 		}
 
-		htmlIndex, err := generateIndexPageHTML(indexTemplate, s.Config, s.Posts[st:ed], prev, next)
-		if err != nil {
+		// Build the index pages
+		data := struct {
+			Site         *site
+			Posts        []post
+			CurrentPage  string
+			PreviousPage string
+			NextPage     string
+		}{
+			s,
+			posts[st:ed],
+			curr,
+			prev,
+			next,
+		}
+
+		htmlIndex := &bytes.Buffer{}
+		if err := indexTemplate.Execute(htmlIndex, data); err != nil {
 			return nil, err
 		}
 
-		htmlPages = append(htmlPages, htmlIndex)
+		htmlPages = append(htmlPages, htmlIndex.String())
 	}
 
 	return htmlPages, nil
 }
 
-func generateIndexPageHTML(indexTemplate *template.Template, cfg config, posts []post, prev string, next string) (string, error) {
-	data := struct {
-		Config       config
-		Posts        []post
-		PreviousPage string
-		NextPage     string
-	}{
-		cfg,
-		posts,
-		prev,
-		next,
-	}
-
-	htmlIndex := &bytes.Buffer{}
-	if err := indexTemplate.Execute(htmlIndex, data); err != nil {
-		return "", err
-	}
-
-	return htmlIndex.String(), nil
-}
-
-func (s *site) writeIndexFiles(indexPages []string) error {
+func (s *site) writeIndex(indexPages []string) error {
 	for i, page := range indexPages {
 		path := s.Config.Public
 		if i > 0 {

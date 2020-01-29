@@ -57,6 +57,8 @@ Date: 01-08-2015 00:45
 Title: Hello, world!
 Template: post
 Comments: enabled
+Page: false
+Pinned : false
 
 
 Here starts the content of the post.
@@ -67,6 +69,11 @@ Posts content is created using the [Markdown syntax](https://github.com/adam-p/m
 It is recommended to name the file with the title of the post replacing spaces with hyphens, because it will be included in the post's permalink. The permalink of the example post above, if the file is named "test-post.md" would be:
 
     http://example.com/2015/01/08/test-post/
+
+The values `Page` and `Pinned` from the metadata are optional, and their meaning is:
+
+* Page: Defines whether the file will be treated as a page or not. A page is different from a post because are not indexed.
+* Pinned: Defines whether the post or page will be pinned or not. This can be then leveraged in the template to create navigation bars, starred post section, etc. (check _example_site)
 
 ## Writing templates
 
@@ -92,21 +99,29 @@ The data struct passed to the template is different for the index and the posts:
 
 ``` Go
  data := struct {
-     Config Config
-     Post   Post
+		Site *site
+		Post post
  }{
-     site.Config,
-     p,
+		s,
+		*p,
  }
 
- type Post struct {
- 	Author    string
- 	Date      time.Time
- 	Title     string
- 	Content   string
- 	Preview   string
- 	Template  string
- 	Permalink string
+ type site struct {
+	Config config
+	Posts  []post
+ }
+
+ type post struct {
+	Author          string
+	Date            time.Time
+	Title           string
+	Content         string
+	Preview         string
+	Page            bool
+	Pinned          bool
+	Template        string
+	Permalink       string
+	Comments        string
  }
 
  type Config struct {
@@ -140,7 +155,7 @@ The data struct passed to the template is different for the index and the posts:
      NextPage     string
  }{
      s.Config,
-     s.Posts[st:ed],
+     posts[st:ed],
      prev,
      next,
  }
@@ -150,7 +165,7 @@ The data struct passed to the template is different for the index and the posts:
   * Iterate over the posts and print the title of the post: {{range .Posts}} {{.Title}} {{end}}
   * Check if next page exists and print the path to it: {{if .NextPage}} {{.NextPage}} {{end}}
 
-Whether you don't want to make a template, or you created one and would like to share it,  check the [official templates repository](http://github.com/zlowram/blgo-templates)!
+Whether you don't want to make a template, or you created one and would like to share it, check the [official templates repository](http://github.com/zlowram/blgo-templates)!
 
 ### Using Google Analytics
 
@@ -183,11 +198,12 @@ Current features
 * Index pagination
 * Comments via disqus
 * Support for GoogleAnalytics
+* Support for pages.
+* Support for pinned posts / pages.
 
 Future features
 ---------------
 
-* Support for pages.
 * Tags for posts.
 * Permalink customization.
 * Etc.
@@ -197,14 +213,14 @@ Sites using blgo
 
 If you are using blgo for your site, we would like to know! You can either contact me via [twitter](http://twitter.com/zlowram_) or you can send a pull-request adding your URL in the following list:
 
-* [nopatch.me](http://nopatch.me) (zlowram's site)
-* your site here 
+* [zlowr.am](http://zlowr.am) (zlowram's site)
+* your site here
 
 Contributing
 ------------
 If you would like to contribute to this project, you can do it in several ways:
 
 * Opening an Issue to report a bug, suggest a feature, whatever.
-* Sending a pull-request with your changes. 
+* Sending a pull-request with your changes.
 
 In both cases it will be reviewed and studied if it should be merged or not in the project.
