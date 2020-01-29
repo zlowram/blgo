@@ -15,14 +15,17 @@ import (
 )
 
 type post struct {
-	Author    string
-	Date      time.Time
-	Title     string
-	Content   string
-	Preview   string
-	Template  string
-	Permalink string
-	Comments  bool
+	Author          string
+	Date            time.Time
+	Title           string
+	Content         string
+	Preview         string
+	Page            bool
+	Pinned          bool
+	Template        string
+	Permalink       string
+	Comments        string
+	commentsEnabled bool
 }
 
 type byDate []post
@@ -31,7 +34,7 @@ func (a byDate) Len() int           { return len(a) }
 func (a byDate) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byDate) Less(i, j int) bool { return a[i].Date.After(a[j].Date) }
 
-func loadPost(filename string) (post, error) {
+func newPost(filename string) (post, error) {
 	var p post
 
 	content, err := ioutil.ReadFile(filename)
@@ -76,13 +79,25 @@ func (p *post) processMetadata(metadata string, postName string) error {
 	rauthor := regexp.MustCompile(`Author: (.*)`)
 	rdate := regexp.MustCompile(`Date: (.*)`)
 	rtitle := regexp.MustCompile(`Title: (.*)`)
+	rpage := regexp.MustCompile(`Page: (.*)`)
+	rpinned := regexp.MustCompile(`Pinned: (.*)`)
 	rtemplate := regexp.MustCompile(`Template: (.*)`)
-	rcomments := regexp.MustCompile(`Comments: (.*)`)
+	rcommentsEnabled := regexp.MustCompile(`Comments: (.*)`)
 
 	if author := rauthor.FindStringSubmatch(metadata); author != nil {
 		p.Author = author[1]
 	} else {
 		return errors.New("author not defined for post " + postName)
+	}
+
+	if page := rpage.FindStringSubmatch(metadata); page != nil {
+		if strings.ToLower(page[1]) == "true" {
+			p.Page = true
+		} else {
+			p.Page = false
+		}
+	} else {
+		p.Page = false
 	}
 
 	if date := rdate.FindStringSubmatch(metadata); date != nil {
@@ -92,7 +107,11 @@ func (p *post) processMetadata(metadata string, postName string) error {
 		month := strconv.Itoa(int(p.Date.Month()))
 		day := strconv.Itoa(p.Date.Day())
 		fname := strings.Split(strings.Split(postName, ".")[0], "/")[1]
-		p.Permalink = "/" + year + "/" + month + "/" + day + "/" + fname + "/"
+		if p.Page {
+			p.Permalink = "/etc/" + fname + "/"
+		} else {
+			p.Permalink = "/" + year + "/" + month + "/" + day + "/" + fname + "/"
+		}
 	} else {
 		return errors.New("date not defined for post " + postName)
 	}
@@ -109,20 +128,31 @@ func (p *post) processMetadata(metadata string, postName string) error {
 		return errors.New("template not defined for post " + postName)
 	}
 
-	if comments := rcomments.FindStringSubmatch(metadata); comments != nil {
-		if comments[1] == "enabled" {
-			p.Comments = true
+	if pinned := rpinned.FindStringSubmatch(metadata); pinned != nil {
+		if strings.ToLower(pinned[1]) == "true" {
+			p.Pinned = true
+		} else {
+			p.Pinned = false
+		}
+	} else {
+		p.Pinned = false
+	}
+
+	if commentsEnabled := rcommentsEnabled.FindStringSubmatch(metadata); commentsEnabled != nil {
+		if strings.ToLower(commentsEnabled[1]) == "enabled" {
+			p.commentsEnabled = true
 		}
 	}
 
 	return nil
 }
 
-func (p *post) convertPost() (string, error) {
-	htmlComments, err := p.convertComments()
+func (p *post) build(s *site) (string, error) {
+	htmlComments, err := p.buildComments()
 	if err != nil {
 		return "", err
 	}
+	p.Comments = htmlComments
 
 	templateFile := blog.Config.Templates + "/" + p.Template + ".html"
 	layout, err := ioutil.ReadFile(templateFile)
@@ -132,13 +162,11 @@ func (p *post) convertPost() (string, error) {
 
 	htmlPost := &bytes.Buffer{}
 	data := struct {
-		Config   config
-		Post     post
-		Comments string
+		Site *site
+		Post post
 	}{
-		blog.Config,
+		s,
 		*p,
-		htmlComments,
 	}
 	postLayout := template.Must(template.New(p.Template).Parse(string(layout)))
 	if err := postLayout.Execute(htmlPost, data); err != nil {
@@ -148,10 +176,10 @@ func (p *post) convertPost() (string, error) {
 	return htmlPost.String(), nil
 }
 
-func (p *post) convertComments() (string, error) {
+func (p *post) buildComments() (string, error) {
 	htmlComments := &bytes.Buffer{}
 
-	if p.Comments {
+	if p.commentsEnabled {
 		data := struct {
 			DisqusShortname string
 			Permalink       string

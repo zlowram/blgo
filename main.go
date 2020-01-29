@@ -17,7 +17,7 @@ func main() {
 
 	config := loadConfig(flag.Arg(0))
 	site := newSite(config)
-	site.generateSite()
+	site.build()
 }
 
 func usage() {
