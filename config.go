@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/BurntSushi/toml"
 	"log"
 	"os"
+
+	"github.com/BurntSushi/toml"
 )
 
 type config struct {
@@ -11,6 +12,7 @@ type config struct {
 	Description       string
 	Keywords          string
 	Posts             string
+	Images            string
 	Templates         string
 	Public            string
 	PreviewLength     int
