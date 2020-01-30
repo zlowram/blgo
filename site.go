@@ -104,6 +104,9 @@ func (s *site) copyTemplateFiles() error {
 	if err := copyDir(s.Config.Templates+"/images", s.Config.Public+"/images"); err != nil {
 		return err
 	}
+	if err := copyDir(s.Config.Images, s.Config.Public+"/img"); err != nil {
+		return err
+	}
 	return nil
 }
 
